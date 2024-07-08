@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FDBA13">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FDBA13">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FDBA13">
+
+
+            <ProgressBar
+                android:id="@+id/checkwifi"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:background="#FDBA13"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:background="#FDBA13"
+                    android:gravity="center"
+                    android:layout_weight="0.7">
+                    <ImageView
+                        android:id="@+id/screenshot"
+                        android:layout_width="90dp"
+                        android:layout_height="160dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/standeelogo"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1.3"
+                    android:orientation="vertical"
+                    android:background="#FDBA13"
+                    android:gravity="center"
+                    android:weightSum="4">
+                    <!--                    android:focusable="true"-->
+                    <!--                    android:focusableInTouchMode="true">-->
+
+                    <ImageView
+                        android:layout_width="121dp"
+                        android:layout_height="0dp"
+                        android:src="@drawable/asset1"
+                        android:layout_weight="1.5"/>
+                    <EditText
+                        android:id="@+id/new_url"
+                        android:maxLines="1"
+                        android:inputType="text"
+                        android:scrollHorizontally="true"
+                        android:ellipsize="end"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_marginLeft="5dp"
+                        android:background="#ffffff"
+                        android:paddingLeft="40dp"
+                        android:paddingRight="40dp"
+                        android:layout_marginTop="25dp"
+                        android:textColorHint="#9b9b9b"
+                        android:hint="Enter signage id "
+                        android:text=""
+                        android:layout_weight="0.4"
+
+                        />
+                    <Button
+                        android:id="@+id/startonline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="0.5"
+                        android:background="@drawable/roundedonlinebutton"
+                        android:layout_marginTop="20dp"
+                        android:textColor="#ffffff"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:text="START ONLINE"/>
+
+                    <TextView
+                        android:id="@+id/or"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.2"
+                        android:gravity="center"
+                        android:text="OR"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"/>
+
+                    <Button
+                        android:id="@+id/startoffline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="0.5"
+                        android:background="@drawable/roundedofflinebutton"
+                        android:textColor="#ffffff"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:text="START OFFLINE"/>
+                    <TextView
+                        android:id="@+id/exit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:layout_marginBottom="40dp"
+                        android:text="Close the app"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </ScrollView>
+
+</RelativeLayout>
