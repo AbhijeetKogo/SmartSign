@@ -30,11 +30,13 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,9 +55,11 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import retrofit2.Call;
@@ -77,11 +81,17 @@ public class HomeScreen extends AppCompatActivity {
     private List<Offer> offerList;
     private List<Offer> saveOfferList;
     private Handler handler;
+
+    Handler mediaHandler = new Handler();
+
     private Runnable runnable;
     //    ProgressBar progressBar;
     TextView downloadingtextView;
     private final List<String> imageUrlList = new ArrayList<>();
     private final List<String> videoUrlList = new ArrayList<>();
+//    private final List<String> mediaUrlList = new ArrayList<>();
+//    private final List<String> sortedFilePath = new ArrayList<>();
+    private final List<String> OfferPath = new ArrayList<>();
 
     private String imageNameLocal = "";
     private String videoNameLocal = "";
@@ -141,6 +151,7 @@ public class HomeScreen extends AppCompatActivity {
         runnable = new Runnable() {
             @Override
             public void run() {
+                Log.d("Sync Api", "run: ");
                 syncApi();
                 Log.e("syncApiCall", "run: " );
                 // Schedule the next sync API call after 3 minutes
@@ -172,6 +183,7 @@ public class HomeScreen extends AppCompatActivity {
 
     //    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private void downloadMedia(Context context, String mediaUrl, DownloadCallback callback) {
+
         // Extract the filename from the URL
         String fileName = getFileNameFromUrl(mediaUrl);
 
@@ -198,37 +210,25 @@ public class HomeScreen extends AppCompatActivity {
         videoView.setVisibility(View.GONE);
 //        }
 
+        Log.d("MediaUrl", "downloadMedia: "+mediaUrl);
 
-        // File does not exist, proceed with the download
-        // Create a DownloadManager instance
+
         DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
 
-        // Create a DownloadManager.Request with the file URL
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mediaUrl));
 
-        // Set the title of the download request
+
         request.setTitle(getFileNameFromUrl(mediaUrl));
-
-        // Set the local destination for the downloaded file to a path within the application's external files directory
         request.setDestinationUri(Uri.fromFile(file));
-//        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOCUMENTS, fileName);
 
-        // Enqueue the download request
+        Log.d("MediaUrl", "downloadMedia: "+Uri.fromFile(file));
+
         long downloadId = downloadManager.enqueue(request);
         Log.e("DownloadStarted", "DownloadStarted" + downloadId);
 
 
-        // Increment the total number of downloads
         totalDownloads++;
 
-//        if (totalDownloads == 1) {
-//            // Show "Downloading" toast message
-//            downloadingToast = Toast.makeText(HomeScreen.this, "Downloading...", Toast.LENGTH_LONG);
-//            downloadingToast.show();
-//        }
-
-
-        // Set up a broadcast receiver to listen for download completion
         BroadcastReceiver onComplete = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -310,44 +310,7 @@ public class HomeScreen extends AppCompatActivity {
     }
 
 
-    private void deleteAllLocalFiles(List<String> mediaList) {
-        String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                + "/smartSignOnline";
 
-        // Create a File object representing the smartSignOnline directory
-        File smartSignOnlineDir = new File(directoryPath);
-
-        // Get all files in the smartSignOnline directory
-        File[] files = smartSignOnlineDir.listFiles();
-
-        // Convert mediaList to a Set for efficient lookup
-        Set<String> mediaSet = new HashSet<>(mediaList);
-
-        if (files != null) {
-            for (File file : files) {
-                try {
-                    // Check if the file exists and if its name is not in the mediaList
-                    if (file.exists() && !mediaSet.contains(file.getName())) {
-                        // Delete the file
-                        boolean isDeleted = file.delete();
-                        if (isDeleted) {
-                            Log.i("deleteAllLocalFiles", "File deleted: " + file.getName());
-                        } else {
-                            Log.e("deleteAllLocalFiles", "Failed to delete file: " + file.getName());
-                        }
-                    }
-                } catch (SecurityException e) {
-                    // Handle security exceptions
-                    Log.e("deleteAllLocalFiles", "SecurityException: " + e.getMessage());
-                } catch (Exception e) {
-                    // Handle other exceptions
-                    Log.e("deleteAllLocalFiles", "Exception: " + e.getMessage());
-                }
-            }
-        } else {
-            Log.i("deleteAllLocalFiles", "No files found in the directory.");
-        }
-    }
 
 
     private void deleteAllLocalFilesAndFetch(final Runnable fetchCallback) {
@@ -414,83 +377,25 @@ public class HomeScreen extends AppCompatActivity {
     }
 
 
-//    private void deleteAllLocalFiles() {
-//
-//        String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-//                + "/smartSignOnline";
-//
-//        // Create a File object representing the smartSignOnline directory
-//        File smartSignOnlineDir = new File(directoryPath);
-//
-//        // Get all files in the smartSignOnline directory
-//        File[] files = smartSignOnlineDir.listFiles();
-//
-////        File downloadsDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-//
-//        // Get all files in the Downloads directory
-////        File[] files = downloadsDirectory.listFiles();
-//
-//        if (files != null) {
-//            for (File file : files) {
-//                // Delete each file
-//                boolean isDeleted = file.delete();
-//                if (isDeleted) {
-//                    Log.i("deleteAllLocalFiles", "File deleted: " + file.getName());
-//                } else {
-//                    Log.e("deleteAllLocalFiles", "Failed to delete file: " + file.getName());
-//                }
-//            }
-//        } else {
-//            Log.i("deleteAllLocalFiles", "No files found in the Downloads directory.");
-//        }
-////        videoUrlList.clear();
-////        imageUrlList.clear();
-////        imageView.setVisibility(View.GONE);
-////        videoView.setVisibility(View.GONE);
-//        fetchDataFromApi();
-//    }
 
-    private void getImageData(File imagePath) {
-        String base64Image = convertImageToBase64(imagePath);
-        if (base64Image != null) {
-            Log.e("TAG", "Base64 Image: " + base64Image);
-        } else {
-            Log.e("TAG", "Failed to convert image to base64");
+
+    public static List<String> sortFilePaths(List<String> mediaList, List<String> filePathList) {
+        // Create a map to link media URLs to file paths
+        Map<String, String> mediaToFilePathMap = new HashMap<>();
+        for (String filePath : filePathList) {
+            String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+            mediaToFilePathMap.put(fileName, filePath);
         }
-    }
 
-    private static String convertImageToBase64(File imagePath) {
-        try {
-            // Read the image file into a Bitmap
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888; // Adjust as needed
-            Bitmap bitmap = BitmapFactory.decodeFile(imagePath.getAbsolutePath(), options);
-
-            // Determine the original image format
-            Bitmap.CompressFormat compressFormat = Bitmap.CompressFormat.JPEG;
-            String extension = MimeTypeMap.getFileExtensionFromUrl(imagePath.getAbsolutePath());
-            if (extension != null) {
-                extension = extension.toLowerCase();
-                if (extension.equals("png")) {
-                    compressFormat = Bitmap.CompressFormat.PNG;
-                }
-                // Add more conditions for other image formats if needed
-            }
-
-            // Convert the Bitmap to a byte array with the original format
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            bitmap.compress(compressFormat, 100, byteArrayOutputStream);
-            byte[] imageBytes = byteArrayOutputStream.toByteArray();
-            byteArrayOutputStream.close();
-
-            // Encode the byte array to a base64 string
-            String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-            return base64Image;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+        // Create a sorted list of file paths based on the media list order
+        List<String> sortedFilePathList = new ArrayList<>();
+        for (String mediaUrl : mediaList) {
+            String mediaFileName = mediaUrl.substring(mediaUrl.lastIndexOf('/') + 1);
+            String filePath = mediaToFilePathMap.get(mediaFileName);
+            sortedFilePathList.add(filePath);
         }
+
+        return sortedFilePathList;
     }
 
 
@@ -514,12 +419,14 @@ public class HomeScreen extends AppCompatActivity {
                         Log.e("syncData", "onResponse: "+sharedPrefManager.getSyncData().getSync_available());
                         if (sharedPrefManager.getSyncData().getSync_available()!=0){
                             Toast.makeText(HomeScreen.this, "New Content Downloading...", Toast.LENGTH_SHORT).show();
-                            imageUrlList.clear();
-                            videoUrlList.clear();
+//                            imageUrlList.clear();
+//                            videoUrlList.clear();
 //                            deleteAllLocalFiles();
                             deleteAllLocalFilesAndFetch(new Runnable() {
                                 @Override
                                 public void run() {
+//                                    mediaUrlList.clear();
+//                                    sortedFilePath.clear();
                                     fetchDataFromApi();
                                 }
                             });
@@ -538,7 +445,13 @@ public class HomeScreen extends AppCompatActivity {
                                         String imageName = imageUri.getLastPathSegment();
                                         String videoName = videoUri.getLastPathSegment();
                                         String offerId = screenShot.getOffer_id();
+                                        Log.e("Get Screenshot", "onResponse: "+imageUri);
+                                        Log.e("Get Screenshot", "onResponse: "+videoUri );
+                                        Log.e("Get Screenshot", "onResponse: "+imageName);
+                                        Log.e("Get Screenshot", "onResponse: "+videoName);
+                                        Log.e("Get Screenshot", "onResponse: "+offerId);
                                         if (imageName!= null && imageName.equals(imageNameLocal)){
+                                            Log.e("ImageNameLocal", "onResponse: "+imageNameLocal);
                                             // Retrieve the Android ID
                                             String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
                                             takeScreenShot(HomeScreen.this,imageName,offerId,UserId,androidId);
@@ -685,44 +598,7 @@ public class HomeScreen extends AppCompatActivity {
     }
 
 
-    private static void saveScreenshot(Context context, Bitmap screenshot,String imageName) {
-        if (screenshot == null) {
-            return;
-        }
 
-        // Get the directory to save the screenshot
-        File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-
-        // Ensure that the image name includes a file extension
-        if (!imageName.contains(".")) {
-            imageName += ".png";  // Default to PNG if no extension is provided
-        }
-
-        // Generate a unique filename based on the original image name and a timestamp
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String uniqueImageName = "screenshot_" + timestamp + "_" + imageName;
-
-        File screenshotFile = new File(directory, uniqueImageName);
-
-        try {
-            // Save the screenshot to the file
-            FileOutputStream outputStream = new FileOutputStream(screenshotFile);
-            screenshot.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-            outputStream.flush();
-            outputStream.close();
-
-            // Log the file path
-            Log.e("TAG", "Saved screenshot to: " + screenshotFile.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Notify the media scanner to recognize the new file
-        MediaScannerConnection.scanFile(context,
-                new String[]{screenshotFile.getAbsolutePath()},
-                null,
-                null);
-    }
 
 
     private void fetchDataFromApi(){
@@ -795,69 +671,65 @@ public class HomeScreen extends AppCompatActivity {
             offerList = sharedPrefManager.getFieldsFromSharedPreference().getOffer();
             if (offerList != null){
                 Log.e("fetchApiCall", "fetchApiCall: 5" );
-                List<String> imageList = new ArrayList<>();
-                List<String> videoList = new ArrayList<>();
                 List<String> mediaList = new ArrayList<>();
                 for (Offer offer : offerList){
-                    if (offer.getOffer_image_path()!=null && !offer.getOffer_image_path().isEmpty()){
-                        imageList.add(offer.getOffer_image_path());
+                    if (offer.getOffer_image_path() != null && !offer.getOffer_image_path().isEmpty()) {
+                        mediaList.add(offer.getOffer_image_path());
                     }
-                    if (offer.getOffer_video_path()!=null && !offer.getOffer_video_path().isEmpty()){
-                        videoList.add(offer.getOffer_video_path());
+
+                    if (offer.getOffer_video_path() != null && !offer.getOffer_video_path().isEmpty()) {
+                        mediaList.add(offer.getOffer_video_path());
                     }
                 }
-                mediaList.addAll(imageList);
-                mediaList.addAll(videoList);
 
-//                deleteAllLocalFiles(mediaList);
-                Log.e("imageList", "onResponse: "+imageList );
-                Log.e("videoList", "onResponse: "+videoList );
-                Log.e("MediaList", "onResponse: "+mediaList );
+
+
+                Log.e("startImageLoop", "Media List before Download: "+mediaList );
 
                 int totalDownloads = mediaList.size();
                 final int[] downloadsCompleted = {0};
 
-                for (String mediaUrl : mediaList) {
+
+                List<String> mediaUrlList = new ArrayList<>();
+
+
+
+                for (String media : mediaList) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        downloadMedia(HomeScreen.this, mediaUrl, new DownloadCallback() {
+                        downloadMedia(HomeScreen.this, media, new DownloadCallback() {
                             @Override
                             public void onDownloadComplete(String filePath) {
+
+
                                 // Increment the count of completed downloads
                                 downloadsCompleted[0]++;
-                                // Check if the downloaded file is an image or video
-                                if (filePath.endsWith(".mp4")) {
-                                    videoUrlList.add(filePath);
-                                } else {
-                                    imageUrlList.add(filePath);
-                                }
+
+
+
+                                mediaUrlList.add(filePath);
+
+                                List<String> sortedFilePath = new ArrayList<>();
+
                                 if (downloadsCompleted[0] == totalDownloads){
-                                    Log.e("imageList", "onDownloadComplete: "+imageUrlList );
-                                    Log.e("videoList", "onDownloadComplete: "+videoUrlList );
+
+                                    List<String> sortedFilePathList = sortFilePaths(mediaList, mediaUrlList);
+
+                                    sortedFilePath.addAll(sortedFilePathList);
+
+//                                    Log.e("startImageLoop", "Media List after Download: "+sortedFilePath );
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            if (!imageUrlList.isEmpty()){
-                                                Log.e("startImageLoop", "run: "+imageUrlList );
-                                                Log.e("startImageLoop", "run: "+videoUrlList );
+//                                            Log.e("startImageLoop", "run: "+mediaUrlList );
+                                            if (!sortedFilePath.isEmpty()){
+//                                                Log.e("startImageLoop", "run: "+mediaUrlList );
                                                 handler.postDelayed(new Runnable() {
                                                     @Override
                                                     public void run() {
 //                                                        progressBar.setVisibility(View.GONE);
                                                         downloadingtextView.setVisibility(View.GONE);
                                                         imageView.setVisibility(View.VISIBLE);
-                                                        startImageLoop(imageUrlList);
-                                                    }
-                                                }, 0);
-                                            } else if (!videoUrlList.isEmpty()) {
-                                                Log.e("startImageLoop", "run: "+imageUrlList );
-                                                Log.e("startImageLoop", "run: "+videoUrlList );
-                                                handler.postDelayed(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-//                                                        progressBar.setVisibility(View.GONE);
-                                                        downloadingtextView.setVisibility(View.GONE);
-                                                        videoView.setVisibility(View.VISIBLE);
-                                                        startVideoLoop(videoUrlList);
+                                                        startLoop(sortedFilePath,offerList);
                                                     }
                                                 }, 0);
                                             } else {
@@ -886,180 +758,185 @@ public class HomeScreen extends AppCompatActivity {
         }
     }
 
-    int currentImageIndex = 0 ;
-    int currentVideoIndex = 0 ;
 
-
-    private Runnable imageRunnable;
-
-    private void startImageLoop(List<String> imageList) {
-        Log.e("imageList", "startImageLoop: " + imageList);
-        currentImageIndex = 0;
-        if (imageRunnable != null) {
-            handler.removeCallbacks(imageRunnable);
+    private Map<String, Integer> buildMediaScreenTimeMap(List<Offer> offers) {
+        Map<String, Integer> mediaScreenTimeMap = new HashMap<>();
+        for (Offer offer : offers) {
+            if (offer.getOffer_image_path() != null && !offer.getOffer_image_path().isEmpty()) {
+                mediaScreenTimeMap.put(offer.getOffer_image_path(), Integer.parseInt(offer.getScreen_time()));
+            }
+            if (offer.getOffer_video_path() != null && !offer.getOffer_video_path().isEmpty()) {
+                mediaScreenTimeMap.put(offer.getOffer_video_path(), Integer.parseInt(offer.getScreen_time()));
+            }
         }
-        imageRunnable = new Runnable() {
+        return mediaScreenTimeMap;
+    }
+
+    private void startLoop(List<String> mediaList, List<Offer> offers) {
+        if (mediaList == null || mediaList.isEmpty()) {
+            return;
+        }
+
+        Log.e("startImageLoop", "Media List in Start Loop: "+mediaList );
+
+        // Build the media screen time map
+        Map<String, Integer> mediaScreenTimeMap = buildMediaScreenTimeMap(offers);
+
+
+        // Start the media loop
+        loopMedia(mediaList, mediaScreenTimeMap);
+    }
+
+
+//    private Handler handler1 = new Handler();
+    private Runnable mediaRunnable;
+    private int currentMediaIndex = 0;
+
+    private void loopMedia(List<String> mediaList, Map<String, Integer> mediaScreenTimeMap) {
+        Log.e("startImageLoop", "Media List in Loop Media: " + mediaList);
+
+        currentMediaIndex = 0;
+        if (mediaRunnable != null) {
+            handler.removeCallbacks(mediaRunnable);
+        }
+
+        mediaRunnable = new Runnable() {
             @Override
             public void run() {
-                Log.e("imageList", "run: imageList1");
-                if (currentImageIndex < imageList.size()) {
-                    Log.e("imageList", "run: imageList2");
-                    String filePath = imageList.get(currentImageIndex);
-                    imageView.setVisibility(View.VISIBLE);
-                    loadImage(filePath);
+                if (currentMediaIndex < mediaList.size()) {
+                    String media = mediaList.get(currentMediaIndex);
 
-                    currentImageIndex++;
-                    handler.postDelayed(imageRunnable, 12000); // Change this line
-                } else {
-                    Log.e("imageList", "run: Call from else block1");
-                    if (videoUrlList.isEmpty()) {
-                        currentImageIndex = 0; // Reset the image index
-                        startImageLoop(imageList); // Start the image loop again
-                    } else {
-                        Log.e("imageList", "run: Call from else block2");
-                        imageView.setVisibility(View.GONE);
-                        startVideoLoop(videoUrlList);
+                    // Display image or play video based on the file extension
+                    if (media.endsWith(".jpeg") || media.endsWith(".jpg") || media.endsWith(".png")) {
+                        displayImage(media);
+                    } else if (media.endsWith(".mp4")) {
+                        playVideo(media);
                     }
+
+                    // Find the corresponding screen time in mediaScreenTimeMap
+                    String matchedKey = findMatchingUrl(media, mediaScreenTimeMap);
+                    Integer delay = mediaScreenTimeMap.get(matchedKey);
+                    if (delay == null) {
+                        delay = 12; // Default to 12 seconds if screen time is missing
+                    }
+
+                    Log.d("MediaLooper", "Displaying media: " + media + " for " + delay + " seconds");
+
+                    currentMediaIndex++;
+                    handler.postDelayed(mediaRunnable, delay * 1000); // Convert delay to milliseconds
+                } else {
+                    // Reset index and start the loop again
+                    currentMediaIndex = 0;
+                    handler.postDelayed(mediaRunnable, 0);
                 }
             }
         };
-        handler.postDelayed(imageRunnable, 0);
-    }
-
-    private void loadImage(String imageUrl) {
-        File file = new File(imageUrl);
-        imageNameLocal = file.getName();
-        Log.e("imageInLoadMethod", "loadImage: " + imageUrl);
-        Picasso.get()
-                .load(new File(imageUrl))
-                .fit()
-                .into(imageView);
+        handler.postDelayed(mediaRunnable, 0);
     }
 
 
-    private Runnable videoRunnable;
 
-    private void startVideoLoop(List<String> videoList) {
-        Log.e("video", "startVideoLoop: "+videoList );
-        currentVideoIndex = 0;
-        if (videoRunnable != null) {
-            handler.removeCallbacks(videoRunnable);
-        }
-//        Handler handler = new Handler(Looper.getMainLooper());
-        videoRunnable = new Runnable() {
-            @Override
-            public void run() {
-                Log.e("video", "run: 1" );
-                String videoUrl = videoList.get(currentVideoIndex);
-                videoView.setVisibility(View.VISIBLE);
-                videoView.setZOrderOnTop(true);
-                loadVideo(videoUrl);
+    private String findMatchingUrl(String mediaPath, Map<String, Integer> mediaScreenTimeMap) {
+        // Assuming the file name is unique, extract it from the local path and match it with the URL
+        String fileName = mediaPath.substring(mediaPath.lastIndexOf('/') + 1);
 
-                videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        Log.e("video", "run: 2" );
-                        if (currentVideoIndex >= videoList.size()) {
-                            currentVideoIndex = 0;
-                        }
-                        currentVideoIndex++;
-
-                        if (currentVideoIndex >= videoList.size()) {
-                            // Video loop is completed, start image loop
-                            videoView.setVisibility(View.GONE);
-                            imageView.setVisibility(View.VISIBLE);
-                            startImageLoop(imageUrlList);
-                        } else {
-                            handler.postDelayed(videoRunnable, 0);
-                        }
-                    }
-                });
-
-                videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                    @Override
-                    public boolean onError(MediaPlayer mp, int what, int extra) {
-                        Log.e("video", "Error occurred while playing video: " + videoUrl + ", Error code: " + what + ", Extra code: " + extra);
-//                        Toast.makeText(HomeScreen.this, "Can't play this video", Toast.LENGTH_SHORT).show();
-                        return true; // Returning true indicates we handled the error
-                    }
-                });
+        for (String key : mediaScreenTimeMap.keySet()) {
+            if (key.contains(fileName)) {
+                return key;
             }
-        };
-        handler.postDelayed(videoRunnable, 0);
+        }
+
+        return null;
     }
 
-    private void loadVideo(String videoUrl) {
-        File file = new File(videoUrl);
-        videoNameLocal = file.getName();
-        Log.e("image", "loadVideo: "+videoUrl );
-        Uri uri = Uri.parse(videoUrl);
-        videoView.setVideoURI(uri);
+    private String extractImageName(String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return null;
+        }
+        int lastIndex = filePath.lastIndexOf('/');
+        if (lastIndex == -1) {
+            return filePath; // If there is no '/', the entire filePath is the file name
+        }
+        return filePath.substring(lastIndex + 1);
+    }
+
+
+    private void displayImage(String imagePath) {
+
+        Log.e("ImagePath", "Image Path: " + imagePath);
+
+        imageNameLocal = extractImageName(imagePath);
+
+//        Log.e("ImagePath", "Image Name: " + imageName);
+
+        videoView.setVisibility(View.GONE);
+        imageView.setVisibility(View.VISIBLE);
+
+        // Load the image from the file path using Picasso
+        Picasso.get()
+                .load(new File(imagePath))
+                .fit()
+                .into(imageView, new com.squareup.picasso.Callback() {
+                    @Override
+                    public void onSuccess() {
+                        ViewGroup.LayoutParams params = imageView.getLayoutParams();
+                        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                        imageView.setLayoutParams(params);
+                        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e("MediaLooper", "Failed to load image: " + imagePath, e);
+                    }
+                });
+    }
+
+
+
+    private void playVideo(String videoPath) {
+        imageView.setVisibility(View.GONE);
+        videoView.setVisibility(View.VISIBLE);
+
+
+        // Set the video URI
+        Uri videoUri = Uri.parse(videoPath);
+        videoView.setVideoURI(videoUri);
+
+        // Set media controller for video controls
+//        MediaController mediaController = new MediaController(this);
+//        mediaController.setAnchorView(videoView);
+//        videoView.setMediaController(mediaController);
+
+        // Set Z order on top if needed
+        videoView.setZOrderOnTop(true);
+
+        // Start the video
         videoView.requestFocus();
         videoView.start();
-    }
 
-//
-//    private void startVideoLoop(List<String> videoList) {
-//        Log.e("video", "startVideoLoop: " + videoList);
-//        currentVideoIndex = 0;
-//        if (videoRunnable != null) {
-//            handler.removeCallbacks(videoRunnable);
-//        }
-//
-//        videoRunnable = new Runnable() {
-//            @Override
-//            public void run() {
-//                Log.e("video", "run: 1");
-//                if (videoList.isEmpty()) {
-//                    Log.e("video", "No videos to play.");
-//                    return;
-//                }
-//
-//                String videoUrl = videoList.get(currentVideoIndex);
-//                videoView.setVisibility(View.VISIBLE);
-//                videoView.setZOrderOnTop(true);
-//                loadVideo(videoUrl);
-//
-//                videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//                    @Override
-//                    public void onCompletion(MediaPlayer mp) {
-//                        Log.e("video", "run: 2");
-//                        currentVideoIndex++;
-//
-//                        if (currentVideoIndex >= videoList.size()) {
-//                            currentVideoIndex = 0;
-//                            // Video loop is completed, start image loop
-//                            videoView.setVisibility(View.GONE);
-//                            imageView.setVisibility(View.VISIBLE);
-//                            startImageLoop(imageUrlList);
-//                        } else {
-//                            handler.postDelayed(videoRunnable, 0);
-//                        }
-//                    }
-//                });
-//
-//                videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-//                    @Override
-//                    public boolean onError(MediaPlayer mp, int what, int extra) {
-//                        Log.e("video", "Error occurred while playing video: " + videoUrl + ", Error code: " + what + ", Extra code: " + extra);
-//                        Toast.makeText(HomeScreen.this, "Can't play this video", Toast.LENGTH_SHORT).show();
-//                        return true; // Returning true indicates we handled the error
-//                    }
-//                });
-//            }
-//        };
-//        handler.postDelayed(videoRunnable, 0);
-//    }
-//
-//    private void loadVideo(String videoUrl) {
-//        File file = new File(videoUrl);
-//        videoNameLocal = file.getName();
-//        Log.e("image", "loadVideo: " + videoUrl);
-//        Uri uri = Uri.fromFile(file); // Use Uri.fromFile for local files
-//        videoView.setVideoURI(uri);
-//        videoView.requestFocus();
-//        videoView.start();
-//    }
+        // Set completion listener to handle video end
+        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                // Handle what to do when video completes
+                Log.d("MediaLooper", "Video completed: " + videoPath);
+                videoView.setVisibility(View.GONE);
+                imageView.setVisibility(View.VISIBLE);
+                // Optionally, you can start the next media here
+            }
+        });
+
+        // Set error listener to handle video errors
+        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                Log.e("MediaLooper", "Error occurred while playing video: " + videoPath + ", Error code: " + what + ", Extra code: " + extra);
+                return true; // Returning true indicates we handled the error
+            }
+        });
+    }
 
 
     private void stopLoop(){

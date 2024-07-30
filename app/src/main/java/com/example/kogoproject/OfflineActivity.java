@@ -82,6 +82,7 @@ public class OfflineActivity extends AppCompatActivity {
                 + "/smartSignOffline";
         File[] files = new File(directoryPath).listFiles();
 
+
         List<String> imageExtensions = Arrays.asList("jpg", "jpeg", "png");
         List<String> videoExtensions = Arrays.asList("mp4");
 
